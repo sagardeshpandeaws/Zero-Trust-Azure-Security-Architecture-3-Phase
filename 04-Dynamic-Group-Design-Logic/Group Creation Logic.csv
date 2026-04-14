@@ -1,0 +1,18 @@
+Entra ID groups,Significance,Type,Who should be inside (Users/Device),,
+Department wise groups,To access data & apps,Dynamic,User auto assigned based on department attribute,,
+DG-License-type of license,to assign microsoft licenses,Dynamic,"User auto assigned based on job title, dept, location attribute",,
+DG-CA-Target-Users,to assign CA Policies,Dynamic,"All internal users (exclude break-glass + admins,disabled, blocked,guest)",,
+DG-Intune-Users,to assign Intune policies,Dynamic,Users with corporate devices (usually all employees),,
+SG-Admins-Protected,Admin accounts,Static,"ALL admin accounts (Global, Security, CA, App admins)","no email, browsing only admin task",
+SG-BreakGlass-Accounts,Emergency access/ DR scenario,Static,2–3 emergency accounts only (no normal users EVER),"no mfa, exclude from CA, minitor sign ins, strong password",
+DG-APP wise groups,to assign apps,Dynamic,Users who need enterprise apps (usually all or filtered by role),,
+DG-Devices-Compliant,Compliant devices,Dynamic,Devices (not users) that meet compliance (auto via Intune),,
+DG-Devices-NonCompliant,Non-compliant devices,Dynamic,Devices failing compliance (auto),,
+DG-Guest-Users,External users,Dynamic,External/B2B users (userType = Guest),,
+DG-Disabled-Users,Blocked users,Dynamic,Blocked/disabled accounts (accountEnabled = false),,
+SG-Privileged-Admins,All privileged roles,Static,"Subset of admins with elevated roles (Security, CA, etc.)","no email, browsing only admin task",PIM (JIT Enabled)
+SG-CA-Admins,CA policy admins,Static,Only Conditional Access administrators,,PIM (JIT Enabled)
+SG-Security-Admins,Security operations,Static,SOC / Security team,,PIM (JIT Enabled)
+SG-Global-Admins,Global Admin account,Static,Very few users (1–3 max),"no email, browsing only admin task",PIM (JIT Enabled)
+SG-Service-Accounts,Service Accounts,Static,"No interactive login, Exclude from MFA, Monitor sign-ins, Prefer Managed Identity",,
+SG-Workload-Identities,workload identities,Static,"App registrations / service principals, Use certificates or secrets, Apply Conditional Access for workload identities",,
