@@ -1,0 +1,235 @@
+Connect-MgGraph -Scopes `
+"Policy.ReadWrite.ConditionalAccess",
+"IdentityRiskyUser.ReadWrite.All",
+"Directory.Read.All"
+
+# ==========================================
+# 🔹 Get Groups
+# ==========================================
+
+$breakGlass = (Get-MgGroup -Filter "displayName eq 'SG-BreakGlass-Exclude'").Id
+$admins     = (Get-MgGroup -Filter "displayName eq 'SG-Admins-Protected'").Id
+$emergency  = (Get-MgGroup -Filter "displayName eq 'Emergency Account'").Id
+
+# 🔹 CA Target Group
+$caGroupId  = (Get-MgGroup -Filter "displayName eq 'DG-CA-Compliant-Users'").Id
+
+# 🔹 Exclusion Sets
+$excludeCritical = @($breakGlass, $admins, $emergency)
+$excludeNoAdmin  = @($breakGlass, $emergency)
+
+# ==========================================
+# 🥇 POLICY 1 — Require MFA
+# ==========================================
+
+$mfaPolicy = @{
+    displayName = "CA - Require MFA"
+    state = "enabledForReportingButNotEnforced"
+    conditions = @{
+        users = @{
+            includeGroups = @($caGroupId)
+            excludeGroups = $excludeCritical
+        }
+        applications = @{
+            includeApplications = @("All")
+        }
+    }
+    grantControls = @{
+        operator = "OR"
+        builtInControls = @("mfa")
+    }
+}
+
+Invoke-MgGraphRequest -Method POST `
+-Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" `
+-Body ($mfaPolicy | ConvertTo-Json -Depth 10)
+
+# ==========================================
+# 🥈 POLICY 2 — Block Legacy Auth
+# ==========================================
+
+$legacyPolicy = @{
+    displayName = "CA - Block Legacy Auth"
+    state = "enabledForReportingButNotEnforced"
+    conditions = @{
+        users = @{
+            includeGroups = @($caGroupId)
+            excludeGroups = $excludeNoAdmin
+        }
+        applications = @{
+            includeApplications = @("All")
+        }
+        clientAppTypes = @("exchangeActiveSync","other")
+    }
+    grantControls = @{
+        operator = "OR"
+        builtInControls = @("block")
+    }
+}
+
+Invoke-MgGraphRequest -Method POST `
+-Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" `
+-Body ($legacyPolicy | ConvertTo-Json -Depth 10)
+
+# ==========================================
+# 🥉 POLICY 3 — Require Compliant Device
+# ==========================================
+
+$devicePolicy = @{
+    displayName = "CA - Require Compliant Device"
+    state = "enabledForReportingButNotEnforced"
+    conditions = @{
+        users = @{
+            includeGroups = @($caGroupId)
+            excludeGroups = $excludeNoAdmin
+        }
+        applications = @{
+            includeApplications = @("All")
+        }
+    }
+    grantControls = @{
+        operator = "AND"
+        builtInControls = @("mfa","compliantDevice")
+    }
+}
+
+Invoke-MgGraphRequest -Method POST `
+-Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" `
+-Body ($devicePolicy | ConvertTo-Json -Depth 10)
+
+# ==========================================
+# 🛡️ POLICY 4 — Sign-in Risk
+# ==========================================
+
+$signinRisk = @{
+    displayName = "CA - Sign-in Risk"
+    state = "enabledForReportingButNotEnforced"
+    conditions = @{
+        signInRiskLevels = @("medium","high")
+        users = @{
+            includeGroups = @($caGroupId)
+            excludeGroups = $excludeNoAdmin
+        }
+        applications = @{
+            includeApplications = @("All")
+        }
+    }
+    grantControls = @{
+        operator = "OR"
+        builtInControls = @("mfa")
+    }
+}
+
+Invoke-MgGraphRequest -Method POST `
+-Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" `
+-Body ($signinRisk | ConvertTo-Json -Depth 10)
+
+# ==========================================
+# 🧠 POLICY 5 — User Risk
+# ==========================================
+
+$userRisk = @{
+    displayName = "CA - User Risk"
+    state = "enabledForReportingButNotEnforced"
+    conditions = @{
+        userRiskLevels = @("high")
+        users = @{
+            includeGroups = @($caGroupId)
+            excludeGroups = $excludeNoAdmin
+        }
+        applications = @{
+            includeApplications = @("All")
+        }
+    }
+    grantControls = @{
+        operator = "OR"
+        builtInControls = @("passwordChange")
+    }
+}
+
+Invoke-MgGraphRequest -Method POST `
+-Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" `
+-Body ($userRisk | ConvertTo-Json -Depth 10)
+
+# ==========================================
+# 👑 POLICY 6 — Admin Protection
+# ==========================================
+
+$adminPolicy = @{
+    displayName = "CA - Admin Protection"
+    state = "enabledForReportingButNotEnforced"
+    conditions = @{
+        users = @{
+            includeRoles = @("62e90394-69f5-4237-9190-012177145e10")
+            excludeGroups = $excludeNoAdmin
+        }
+        applications = @{
+            includeApplications = @("All")
+        }
+    }
+    grantControls = @{
+        operator = "AND"
+        builtInControls = @("mfa","compliantDevice")
+    }
+}
+
+Invoke-MgGraphRequest -Method POST `
+-Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" `
+-Body ($adminPolicy | ConvertTo-Json -Depth 10)
+
+# ==========================================
+# 🌍 POLICY 7 — Location Block
+# ==========================================
+
+$locationPolicy = @{
+    displayName = "CA - Block Untrusted Locations"
+    state = "enabledForReportingButNotEnforced"
+    conditions = @{
+        users = @{
+            includeGroups = @($caGroupId)
+            excludeGroups = $excludeNoAdmin
+        }
+        locations = @{
+            includeLocations = @("All")
+            excludeLocations = @("Trusted")
+        }
+    }
+    grantControls = @{
+        operator = "OR"
+        builtInControls = @("block")
+    }
+}
+
+Invoke-MgGraphRequest -Method POST `
+-Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" `
+-Body ($locationPolicy | ConvertTo-Json -Depth 10)
+
+# ==========================================
+# 🖥️ POLICY 8 — Session Control
+# ==========================================
+
+$sessionPolicy = @{
+    displayName = "CA - Session Control"
+    state = "enabledForReportingButNotEnforced"
+    conditions = @{
+        users = @{
+            includeGroups = @($caGroupId)
+        }
+        applications = @{
+            includeApplications = @("All")
+        }
+    }
+    sessionControls = @{
+        signInFrequency = @{
+            value = 1
+            type = "hours"
+            isEnabled = $true
+        }
+    }
+}
+
+Invoke-MgGraphRequest -Method POST `
+-Uri "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies" `
+-Body ($sessionPolicy | ConvertTo-Json -Depth 10)
+
+Write-Host "✅ Group-Based CA Policies Created Successfully!" -ForegroundColor Green

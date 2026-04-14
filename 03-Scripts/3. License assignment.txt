@@ -1,0 +1,57 @@
+Assigned license to groups created role/designation wise in O365 admin portal
+
+so role/designation changes license auto changes
+
+OR
+
+to get Sku id 
+
+Get-MgSubscribedSku | Select SkuId, SkuPartNumber
+
+
+
+Connect-MgGraph -Scopes "Group.ReadWrite.All","Directory.ReadWrite.All"
+
+# 🔹 Role → License Mapping (Using SKUId)
+$groupLicenseMap = @(
+    @{
+        GroupName = "LG-Manager"
+        SkuId = "cbdc14ab-d96c-4c30-b9f4-6ada7cdc1d46"   # Example GUID
+    },
+    @{
+        GroupName = "LG-Engineer"
+        SkuId = "6fd2c87f-b296-42f0-b197-1e91e994b900"   # Example E3
+    },
+    @{
+        GroupName = "LG-Intern"
+        SkuId = "f245ecc8-75af-4f8e-b61f-27d8114de5f3"   # Example Business Premium
+    }
+)
+
+foreach ($item in $groupLicenseMap) {
+
+    try {
+        Write-Host "Processing Group:" $item.GroupName -ForegroundColor Cyan
+
+        # Get Group
+        $group = Get-MgGroup -Filter "displayName eq '$($item.GroupName)'"
+
+        if (-not $group) {
+            Write-Host "Group not found:" $item.GroupName -ForegroundColor Red
+            continue
+        }
+
+        # Assign License using GUID
+        Set-MgGroupLicense `
+            -GroupId $group.Id `
+            -AddLicenses @{SkuId = $item.SkuId} `
+            -RemoveLicenses @()
+
+        Write-Host "License assigned to" $item.GroupName -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Error processing" $item.GroupName -ForegroundColor Red
+    }
+}
+
+Write-Host "Bulk Group Licensing (GUID based) Completed!" -ForegroundColor Green

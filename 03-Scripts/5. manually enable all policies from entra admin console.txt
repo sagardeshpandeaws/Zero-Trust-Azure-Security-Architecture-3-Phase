@@ -1,0 +1,1 @@
+Manually enable all policies from entra admin console

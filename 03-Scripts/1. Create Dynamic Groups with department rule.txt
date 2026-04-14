@@ -1,0 +1,69 @@
+# Connect to Microsoft Graph
+Connect-MgGraph -Scopes "Group.ReadWrite.All","Directory.ReadWrite.All"
+
+# 🔹 Define users to exclude
+$excludedUsers = @(
+    "SagarDeshpande@Sagardeshpandeaws.onmicrosoft.com",
+    "jaymahakal@Sagardeshpandeaws.onmicrosoft.com"
+)
+
+# 🔹 Build exclusion condition (multiple -ne, supported in dynamic rules)
+$excludedCondition = ($excludedUsers | ForEach-Object {
+    "(user.userPrincipalName -ne `"$($_)`")"
+}) -join " and "
+
+# 🔹 Build dynamic membership rule
+$dynamicRule = "(user.accountEnabled -eq true) and (user.userType -eq `"Member`") and $excludedCondition"
+
+# 🔹 Group definitions
+$dynamicGroups = @(
+    @{
+        Name = "DG-Default"
+        Rule = '(user.department -eq "Default")'
+    },
+    @{
+        Name = "DG-Finance"
+        Rule = '(user.department -eq "Finance")'
+    },
+    @{
+        Name = "DG-IT"
+        Rule = '(user.department -eq "IT")'
+    },
+    @{
+        Name = "DG-HR"
+        Rule = '(user.department -eq "HR")'
+    },
+    @{
+        Name = "DG-Intune-Users"
+        Rule = $dynamicRule
+    },
+    @{
+        Name = "DG-CA-Compliant-Users"
+        Rule = $dynamicRule
+    }
+)
+
+# 🔹 Create groups if they do not exist
+foreach ($g in $dynamicGroups) {
+
+    $existing = Get-MgGroup -Filter "displayName eq '$($g.Name)'"
+
+    if (-not $existing) {
+
+        New-MgGroup `
+            -DisplayName $g.Name `
+            -MailEnabled:$false `
+            -MailNickname ($g.Name -replace " ", "") `
+            -SecurityEnabled:$true `
+            -GroupTypes @("DynamicMembership") `
+            -MembershipRule $g.Rule `
+            -MembershipRuleProcessingState "On"
+
+        Write-Host "✅ Created Dynamic Group: $($g.Name)" -ForegroundColor Green
+    }
+    else {
+        Write-Host "⚠️ Already exists: $($g.Name)" -ForegroundColor Yellow
+    }
+}
+
+Write-Host "`n🎯 Completed successfully!" -ForegroundColor Cyan

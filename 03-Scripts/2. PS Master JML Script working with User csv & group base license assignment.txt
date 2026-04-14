@@ -1,0 +1,137 @@
+Connect-MgGraph -Scopes `
+"User.ReadWrite.All",
+"Directory.ReadWrite.All",
+"UserAuthenticationMethod.ReadWrite.All"
+
+# 🔹 File paths
+$csvPath   = "D:\users.csv"
+$logFile   = "D:\JML_Log.txt"
+$tapOutput = "D:\JML_TAP.csv"
+
+$users = Import-Csv -Path $csvPath
+$tapResults = @()
+
+
+foreach ($u in $users) {
+
+    try {
+        Write-Host "Processing:" $u.UserPrincipalName -ForegroundColor Cyan
+
+        # Default Department fallback
+        if (-not $u.Department -or $u.Department.Trim() -eq "") {
+            $u.Department = "Default"
+        }
+
+        # ==========================================
+        # 🔹 JOINER
+        # ==========================================
+        if ($u.Action -eq "Joiner") {
+
+            $existingUser = Get-MgUser -UserId $u.UserPrincipalName -ErrorAction SilentlyContinue
+            if ($existingUser) {
+                Write-Host "User exists, skipping:" $u.UserPrincipalName -ForegroundColor Yellow
+                continue
+            }
+
+            $randomPassword = [System.Web.Security.Membership]::GeneratePassword(16,3)
+
+            $newUser = New-MgUser `
+                -DisplayName $u.DisplayName `
+                -UserPrincipalName $u.UserPrincipalName `
+                -MailNickname ($u.UserPrincipalName.Split("@")[0]) `
+                -GivenName $u.GivenName `
+                -Surname $u.Surname `
+                -Department $u.Department `
+                -JobTitle $u.JobTitle `
+                -OfficeLocation $u.OfficeLocation `
+                -MobilePhone $u.MobilePhone `
+                -UsageLocation $u.UsageLocation `
+                -AccountEnabled:$true `
+                -PasswordProfile @{
+                    Password = $randomPassword
+                    ForceChangePasswordNextSignIn = $true
+                }
+
+            $userObj = $newUser
+
+            # Manager
+            if ($u.ManagerUPN) {
+                $manager = Get-MgUser -UserId $u.ManagerUPN
+                if ($manager) {
+                    Set-MgUserManagerByRef -UserId $userObj.Id -BodyParameter @{
+                        "@odata.id" = "https://graph.microsoft.com/v1.0/users/$($manager.Id)"
+                    }
+                }
+            }
+
+
+	# TAP
+            $tap = New-MgUserAuthenticationTemporaryAccessPassMethod `
+                -UserId $userObj.Id `
+                -BodyParameter @{
+                    lifetimeInMinutes = 60
+                    isUsableOnce = $true
+                }
+
+            $tapResults += [PSCustomObject]@{
+                UserPrincipalName = $u.UserPrincipalName
+                TAP = $tap.TemporaryAccessPass
+            }
+
+            Revoke-MgUserSignInSession -UserId $userObj.Id
+
+            Write-Host "Joiner completed" -ForegroundColor Green
+        }
+
+        # ==========================================
+        # 🔹 MOVER
+        # ==========================================
+        elseif ($u.Action -eq "Mover") {
+
+            $userObj = Get-MgUser -UserId $u.UserPrincipalName
+
+            Update-MgUser -UserId $userObj.Id `
+                -Department $u.Department `
+                -JobTitle $u.JobTitle `
+                -OfficeLocation $u.OfficeLocation `
+                -MobilePhone $u.MobilePhone
+
+            # Manager update
+            if ($u.ManagerUPN) {
+                $manager = Get-MgUser -UserId $u.ManagerUPN
+                if ($manager) {
+                    Set-MgUserManagerByRef -UserId $userObj.Id -BodyParameter @{
+                        "@odata.id" = "https://graph.microsoft.com/v1.0/users/$($manager.Id)"
+                    }
+                }
+            }
+
+            Write-Host "Mover completed (department-driven)" -ForegroundColor Yellow
+        }
+
+        # ==========================================
+        # 🔹 LEAVER
+        # ==========================================
+        elseif ($u.Action -eq "Leaver") {
+
+            $userObj = Get-MgUser -UserId $u.UserPrincipalName
+
+            Update-MgUser -UserId $userObj.Id -AccountEnabled:$false
+            Revoke-MgUserSignInSession -UserId $userObj.Id
+
+            Remove-MgUser -UserId $userObj.Id -Confirm:$false
+
+            Write-Host "Leaver completed" -ForegroundColor Red
+        }
+
+        Add-Content -Path $logFile -Value "$(Get-Date) SUCCESS: $($u.UserPrincipalName)"
+    }
+    catch {
+        Write-Host "Error:" $u.UserPrincipalName -ForegroundColor Red
+        Add-Content -Path $logFile -Value "$(Get-Date) ERROR: $($u.UserPrincipalName) - $($_.Exception.Message)"
+    }
+}
+
+$tapResults | Export-Csv -Path $tapOutput -NoTypeInformation
+
+Write-Host "Dynamic JML Automation Completed!" -ForegroundColor Green

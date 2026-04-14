@@ -1,0 +1,5 @@
+Action,DisplayName,UserPrincipalName,MailNickname,GivenName,Surname,Department,JobTitle,OfficeLocation,MobilePhone,UsageLocation,Password,AccountEnabled,Group,ManagerUPN,License
+Joiner,,,,,,,,,,IN,TempInit@123!,TRUE,,,SPB
+Joiner,,,,,,,,,,IN,TempInit@123!,TRUE,,,SPB
+Mover,,,,,,,,,,IN,TempInit@123!,TRUE,,,SPB
+Leaver,,,,,,,,,,IN,TempInit@123!,TRUE,,,SPB
