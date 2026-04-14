@@ -1,5 +1,7 @@
 Enterprise Zero Trust Architecture – Azure Security Implementation
 
+This project was implemented in a lab environment to simulate enterprise Zero Trust architecture.
+
 🔹 Overview: 
 This repository demonstrates the design and implementation of an enterprise-grade Zero Trust architecture using Microsoft Azure and Microsoft 365 security stack.
 The solution is built on identity-first security principles, enforcing device compliance, secure application access (without VPN), and centralized monitoring with SIEM and SOAR capabilities.
