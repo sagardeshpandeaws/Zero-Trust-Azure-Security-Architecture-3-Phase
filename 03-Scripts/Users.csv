@@ -1,0 +1,10 @@
+Action,DisplayName,UserPrincipalName,GivenName,Surname,Department,JobTitle,Company,OfficeLocation,City,Country,MobilePhone,UsageLocation,EmployeeID,ManagerUPN,UserType,StartDate,EndDate
+Joiner,User One,user1@yourtenant.com,User,One,Engineering,Senior Engineer,YourTenant,Building A,East Campus,US,+1-555-0101,US,EMP001,manager1@yourtenant.com,Member,2026-07-01,
+Joiner,User Two,user2@yourtenant.com,User,Two,Finance,Financial Analyst,YourTenant,Building A,East Campus,US,+1-555-0102,US,EMP002,manager2@yourtenant.com,Member,2026-07-15,
+Joiner,User Three,user3@yourtenant.com,User,Three,IT,DevOps Engineer,YourTenant,Building B,West Campus,US,+1-555-0103,US,EMP003,manager1@yourtenant.com,Member,2026-08-01,
+Joiner,User Four,user4@yourtenant.com,User,Four,HR,HR Manager,YourTenant,Building A,East Campus,US,+1-555-0104,US,EMP004,manager2@yourtenant.com,Member,2026-07-01,
+Mover,User Five,user5@yourtenant.com,Five,User,IT,IT Support Specialist,YourTenant,Building B,West Campus,US,+1-555-0105,US,EMP005,manager1@yourtenant.com,Member,,,
+Mover,User Six,user6@yourtenant.com,Six,User,Sales,Sales Executive,YourTenant,Building A,East Campus,US,+1-555-0106,US,EMP006,manager2@yourtenant.com,Member,,,
+Mover,Manager One,manager1@yourtenant.com,Manager,One,Engineering,Engineering Lead,YourTenant,Building A,East Campus,US,+1-555-0107,US,EMP007,manager1@yourtenant.com,Member,,,
+Leaver,User Seven,user7@yourtenant.com,Seven,User,Operations,Operations Manager,YourTenant,Building A,East Campus,US,+1-555-0108,US,EMP008,manager2@yourtenant.com,Member,,2026-07-31
+Leaver,User Eight,user8@yourtenant.com,Eight,User,Sales,Sales Representative,YourTenant,Building B,West Campus,US,+1-555-0109,US,EMP009,manager2@yourtenant.com,Member,,2026-08-15

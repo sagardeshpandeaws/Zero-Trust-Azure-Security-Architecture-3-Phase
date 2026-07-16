@@ -1,0 +1,48 @@
+# Logs
+*.log
+JML_Log.txt
+*_log.txt
+
+# TAP output (sensitive)
+JML_TAP.csv
+*TAP*.csv
+*TAP*.txt
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+Thumbs.db
+Desktop.ini
+
+# PowerShell
+*.psc1
+*.pssc
+
+# Output files
+Export-*.csv
+Import-*.csv
+*-Output.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Binary files (keep in repo but ignore local)
+*.bak
+*.old
+
+# Environment
+.env
+.env.local
+*.env
